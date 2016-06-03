@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import ds9
 import sys
-def fixfits( imname ):
+def fixfits( fitsfd ):
 
-	fitsfd = fits.open( imname )
+
 	fitsfd[0].header['EPOCH'] = 2000.0
 	fitsfd[0].header['EQUINOX'] = 2000.0
 	fitsfd[1].header['CTYPE1'] = 'RA---TAN'
@@ -60,6 +60,32 @@ DETSEC  = '[1:2048,1:4096]'    / Detector section
 CCDSEC  = '[1:2048,1:4096]'    / CCD section                                    CCDSEC1 = '[1:682,1:1365]'     / CCD section with binning                       OVRSCAN1=                   20 / Overscan on axis 1                             OVRSCAN2=                    0 / Overscan on axis 2 
 """
 
+def mergem4k( unmerged_fitsfd ):
+
+	um_fitsfd =  fixfits( unmerged_fitsfd )
+		
+	procdata1, procdata2 =  m4kproc(um_fitsfd)
+	unity = m4kmerge( procdata1, procdata2 )
+
+
+	hdu = fits.PrimaryHDU(unity)
+	hdu.header=um_fitsfd[0].header
+	hdulist = fits.HDUList([hdu])
+	
+	#WCS stuff
+	hdulist[0].header['ctype1'] = um_fitsfd[1].header['ctype1']
+	hdulist[0].header['ctype2'] = um_fitsfd[1].header['ctype2']
+	hdulist[0].header['crval1'] = um_fitsfd[1].header['crval1']
+	hdulist[0].header['crval2'] = um_fitsfd[1].header['crval2']
+	hdulist[0].header['crpix1'] = unity.shape[0]/2
+	hdulist[0].header['crpix2'] = unity.shape[1]/2
+	hdulist[0].header['CD1_1']  = um_fitsfd[1].header['CD1_1']
+	hdulist[0].header['CD1_2']  = um_fitsfd[1].header['CD1_2'] 
+	hdulist[0].header['CD2_1']  = um_fitsfd[1].header['CD2_1']
+	hdulist[0].header['CD2_2']  = um_fitsfd[1].header['CD2_2']
+
+	return hdulist
+
 def main(imname, outdir="merged", outname=None):
 	
 	if imname.endswith(".fits"):
@@ -81,47 +107,24 @@ def main(imname, outdir="merged", outname=None):
 	else:
 		outpath = "{0}/{1}".format(outdir, outname)
 
+	fitsfd = fits.open(imname)
+	merged_fits = mergem4k( fitsfd )
 	
-
-	fitsfd =  fixfits( imname )
-	
-	
-	
-	procdata1, procdata2 =  m4kproc(fitsfd)
-	unity = m4kmerge( procdata1, procdata2 )
-
-
-	hdu = fits.PrimaryHDU(unity)
-	hdu.header=fitsfd[0].header
-	hdulist = fits.HDUList([hdu])
-	
-	#WCS stuff
-	hdulist[0].header['ctype1'] =fitsfd[1].header['ctype1']
-	hdulist[0].header['ctype2'] = fitsfd[1].header['ctype2']
-	hdulist[0].header['crval1'] = fitsfd[1].header['crval1']
-	hdulist[0].header['crval2'] = fitsfd[1].header['crval2']
-	hdulist[0].header['crpix1'] = unity.shape[0]/2
-	hdulist[0].header['crpix2'] = unity.shape[1]/2
-	hdulist[0].header['CD1_1']  = fitsfd[1].header['CD1_1']
-	hdulist[0].header['CD1_2']  = fitsfd[1].header['CD1_2'] 
-	hdulist[0].header['CD2_1']  = fitsfd[1].header['CD2_1']
-	hdulist[0].header['CD2_2']  = fitsfd[1].header['CD2_2']
-	
-
+	fitsfd.close()
 
 
 	if os.path.exists( outpath ):
 		os.remove(outpath)
 		
-	hdulist.writeto(outpath)
-
+	merged_fits.writeto(outpath)
+	merged_fits.close()
 	#d=ds9.ds9()
 	#d.set("file {0}".format(outpath))
 
+if __name__ == "__main__":
+	for name in sys.argv[1:]:
 
-for name in sys.argv[1:]:
-	print name
-	main(name)
+		main(name)
 
 
 
