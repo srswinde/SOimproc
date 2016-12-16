@@ -6,26 +6,42 @@ import numpy as np
 import ds9
 import sys
 def fixfits( fitsfd ):
-
-
+	print "__________________"
+	print "IS IT FIXED"
+	print "__________________"
 	fitsfd[0].header['EPOCH'] = 2000.0
 	fitsfd[0].header['EQUINOX'] = 2000.0
-	fitsfd[1].header['CTYPE1'] = 'RA---TAN'
-	fitsfd[1].header['CTYPE2'] = 'DEC--TAN'
-	fitsfd[2].header['CTYPE1'] = 'RA---TAN'
-	fitsfd[2].header['CTYPE2'] = 'DEC--TAN'
+	fitsfd[1].header['CTYPE1'] = 'RA---TNX'
+	fitsfd[1].header['CTYPE2'] = 'DEC--TNX'
+	fitsfd[2].header['CTYPE1'] = 'RA---TNX'
+	fitsfd[2].header['CTYPE2'] = 'DEC--TNX'
+	fitsfd[1].header['CD1_1'] = 0.000833333353511989
+	fitsfd[1].header['CD2_2'] = 0.000833333353511989
+	fitsfd[2].header['CD1_1'] = -0.000833333353511989
+	fitsfd[2].header['CD2_2'] = 0.000833333353511989
+
 	return fitsfd
+		
 
 
 def m4kproc( fitsfd ):
 	dummy_name = "dummy.fits"
-	if os.path.exists(dummy_name): os.remove(dummy_name)
-	fitsfd.writeto(dummy_name)
+	if os.path.exists( dummy_name ): os.remove( dummy_name )
+	fitsfd.writeto( dummy_name )
+	
+	#CRVALs are reversed. This will probably be fixe soon.
+	# and this will need to be removed. 
+	for ext in [1,2]:
+		ra=fitsfd[ext].header['CRVAL2']
+		dec=fitsfd[ext].header['CRVAL1']
+		fitsfd[ext].header['CRVAL2']=dec
+		fitsfd[ext].header['CRVAL1']=ra
+
 	amp1 = ccdproc.fits_ccddata_reader( dummy_name, hdu=1 )
 	amp2 = ccdproc.fits_ccddata_reader( dummy_name, hdu=2 )
 	procdata1 = ccdproc.ccd_process( amp1, oscan=fitsfd[1].header['biassec'], trim=fitsfd[1].header['TRIMSEC'] )
 	procdata2 = ccdproc.ccd_process( amp2, oscan=fitsfd[2].header['biassec'], trim=fitsfd[2].header['TRIMSEC'] )
-	os.remove(dummy_name)
+	os.remove( dummy_name )
 	return procdata1, procdata2
 
 def m4kmerge( amp1, amp2 ):
@@ -63,7 +79,7 @@ CCDSEC  = '[1:2048,1:4096]'    / CCD section                                    
 def mergem4k( unmerged_fitsfd ):
 
 	um_fitsfd =  fixfits( unmerged_fitsfd )
-		
+	#um_fitsfd = unmerged_fitsfd	
 	procdata1, procdata2 =  m4kproc(um_fitsfd)
 	unity = m4kmerge( procdata1, procdata2 )
 
