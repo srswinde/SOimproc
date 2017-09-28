@@ -25,6 +25,8 @@ def fixfits( fitsfd ):
 
 
 def m4kproc( fitsfd ):
+	"""m4kproc merges and trims the M4k Images
+	"""
 	dummy_name = "dummy.fits"
 	if os.path.exists( dummy_name ): os.remove( dummy_name )
 	fitsfd.writeto( dummy_name )
@@ -78,27 +80,27 @@ CCDSEC  = '[1:2048,1:4096]'    / CCD section                                    
 
 def mergem4k( unmerged_fitsfd ):
 
-	um_fitsfd =  fixfits( unmerged_fitsfd )
+	#um_fitsfd =  fixfits( unmerged_fitsfd )
 	#um_fitsfd = unmerged_fitsfd	
-	procdata1, procdata2 =  m4kproc(um_fitsfd)
+	procdata1, procdata2 =  m4kproc(unmerged_fitsfd)
 	unity = m4kmerge( procdata1, procdata2 )
 
 
 	hdu = fits.PrimaryHDU(unity)
-	hdu.header=um_fitsfd[0].header
+	hdu.header=unmerged_fitsfd[0].header
 	hdulist = fits.HDUList([hdu])
 	
 	#WCS stuff
-	hdulist[0].header['ctype1'] = um_fitsfd[1].header['ctype1']
-	hdulist[0].header['ctype2'] = um_fitsfd[1].header['ctype2']
-	hdulist[0].header['crval1'] = um_fitsfd[1].header['crval1']
-	hdulist[0].header['crval2'] = um_fitsfd[1].header['crval2']
+	hdulist[0].header['ctype1'] = unmerged_fitsfd[1].header['ctype1']
+	hdulist[0].header['ctype2'] = unmerged_fitsfd[1].header['ctype2']
+	hdulist[0].header['crval1'] = unmerged_fitsfd[1].header['crval1']
+	hdulist[0].header['crval2'] = unmerged_fitsfd[1].header['crval2']
 	hdulist[0].header['crpix1'] = unity.shape[0]/2
 	hdulist[0].header['crpix2'] = unity.shape[1]/2
-	hdulist[0].header['CD1_1']  = um_fitsfd[1].header['CD1_1']
-	hdulist[0].header['CD1_2']  = um_fitsfd[1].header['CD1_2'] 
-	hdulist[0].header['CD2_1']  = um_fitsfd[1].header['CD2_1']
-	hdulist[0].header['CD2_2']  = um_fitsfd[1].header['CD2_2']
+	hdulist[0].header['CD1_1']  = unmerged_fitsfd[1].header['CD1_1']
+	hdulist[0].header['CD1_2']  = unmerged_fitsfd[1].header['CD1_2'] 
+	hdulist[0].header['CD2_1']  = unmerged_fitsfd[1].header['CD2_1']
+	hdulist[0].header['CD2_2']  = unmerged_fitsfd[1].header['CD2_2']
 
 	return hdulist
 
