@@ -3,7 +3,6 @@ import ccdproc
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-import ds9
 import sys
 def fixfits( fitsfd ):
 	print "__________________"
