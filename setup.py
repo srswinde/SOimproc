@@ -9,5 +9,6 @@ setup(name='imgproc',
       author_email='scottswindell@email.arizona.edu',
 	  package_dir = {'':'src'},
       py_modules = ['m4kproc'],
+      scripts = ['scripts/combine_amps_m4k.py'],
      )
 
